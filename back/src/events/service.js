@@ -3,15 +3,19 @@ const mongoose = require('mongoose');
 
 module.exports = class {
   constructor(schemas) {
-    this.SMQuery = schemas.SMQuery;
+    this.Event = schemas.Event;
   }
 
   async findAll(realm) {
-    return await this.SMQuery.find({realm});
+    return await this.Event.findAll();
   }
 
   async findOne(realm, id) {
     const queryId = mongoose.Types.ObjectId(id);
-    return await this.SMQuery.findOne({'_id': queryId, realm});
+    return await this.Event.findOne({'_id': queryId});
+  }
+
+  async createEvent(event) {
+    return await this.Event.create(event);
   }
 };

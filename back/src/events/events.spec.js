@@ -10,7 +10,7 @@ const mongoose = require('mongoose');
 
 describe('query', () => {
   const appPath = config.app.path;
-  let queryData, fixturesHelper, app, port, host;
+  let eventData, fixturesHelper, app, port, host;
 
   beforeAll(async() => {
     port = await docker.getExternalPort('mongo', '27017');
@@ -21,29 +21,13 @@ describe('query', () => {
     const dbUri = `mongodb://${host}:${port}/${uuid()}`;
     app = new AppFactory(dbUri).getApp();
     await app.setup();
-    queryData = {
-      'title': 'High School Permissions 2',
-      'resourceKey': 'nuevaappdeprueba2',
-      'fields': [{
-        'key': 'salary2',
-      }, {
-        'key': 'initiator.email',
-      }, {
-        'key': 'section2',
+    eventData = {
+      'type': 'ASALTO',
+      'coordinates': {
+        'lat': 1234,
+        'long': 1234,
       },
-      ],
-      'filters': [{
-        'type': 'filterTitle',
-        'label': 'First Title',
-      }, {
-        'type': 'filterItem',
-        'key': 'initiator.email',
-        'defaultValue': ['sguerrero@devsu.com'],
-      }, {
-        'type': 'filterItem',
-        'key': 'age',
-        'defaultValue': [27, 30, 32],
-      }],
+      'description': 'A very long description with the report details',
     };
     fixturesHelper = new FixturesHelper(app);
     await fixturesHelper.setup();
@@ -53,23 +37,23 @@ describe('query', () => {
     await app.teardown();
   });
 
-  describe('POST /api/queries', () => {
-    let queryId;
+  describe('POST /api/events', () => {
+    let eventId;
 
     afterEach(async() => {
-      const id = mongoose.Types.ObjectId(queryId);
-      await app.db.SMQuery.remove({'_id': id});
+      const id = mongoose.Types.ObjectId(eventId);
+      await app.db.Event.remove({'_id': id});
     });
 
     const executeValidRequest = () => {
-      return supertest(app).get(`${appPath}/queries`);
+      return supertest(app).post(`${appPath}/events`).send(eventData);
     };
 
     test('should return 201 with the created document', async() => {
       const response = await executeValidRequest()
-        .expect(200)
+        .expect(201)
         .expect('Content-Type', /json/);
-      queryId = response.body._id;
+      eventId = response.body._id;
     });
   });
 });
