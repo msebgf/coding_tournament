@@ -1,3 +1,19 @@
-# Smartmate Queries
+# Jobsity Deliktum
 
-This is a ExpressJs microservice to store queries templates on a database
+## Technologies used
+
+* NodeJS
+* Express
+* Mongo
+
+## How to run
+
+* Set up a mongo db
+* execute yarn install
+* execute yarn run
+
+## How to test
+
+* Install docker
+* execute yarn test
+
