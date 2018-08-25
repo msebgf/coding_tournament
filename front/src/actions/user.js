@@ -1,7 +1,7 @@
-import * as eventActions from './types/event';
+import * as userActions from './types/user';
 
-export const eventActions = () => {
+export const userTest = () => {
   return {
-    type: eventActions.SELECT_LOCATION,
+    type: userActions.TEST_USER_ACTION,
   };
 };

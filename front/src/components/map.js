@@ -1,9 +1,11 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
 import {geolocated} from 'react-geolocated';
 import ReactMapboxGl from "react-mapbox-gl";
 import { Cluster } from "react-mapbox-gl";
 import { Marker } from "react-mapbox-gl";
 import Avatar from '@material-ui/core/Avatar';
+import { selectLocation } from '../actions/event';
 
 import './main.scss';
 
@@ -33,6 +35,13 @@ class MapComponent extends Component {
     );
   };
 
+  selectLocation(map, evt) {
+
+    if (this.props.startedReport){
+      this.props.selectLocation({coordinates: evt.lnglat});
+    }
+  }
+
   render() {
     const {coords, events} = this.props;
     const lat = coords && coords.latitude ? coords.latitude : -0.167;
@@ -51,6 +60,7 @@ class MapComponent extends Component {
         style= "mapbox://styles/mapbox/streets-v9"
         center= {[long, lat]}
         zoom = {[16]}
+        onClick={ this.selectLocation.bind(this)}
         containerStyle= {{
           height: "100vh",
         }}>
@@ -71,9 +81,26 @@ class MapComponent extends Component {
   }
 }
 
+
+const mapStateToProps = (state) => {
+  const { event } = state;
+  return {
+    startedReport: event.startedReport,
+  };
+};
+
+const mapDispatchToProps = {
+  selectLocation,
+};
+
 export default geolocated({
   positionOptions: {
     enableHighAccuracy: false,
   },
   userDecisionTimeout: 5000,
-})(MapComponent);
+})(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps,
+  )(MapComponent),
+);

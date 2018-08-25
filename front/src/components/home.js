@@ -7,7 +7,6 @@ import Grid from '@material-ui/core/Grid';
 import Info from './info';
 import Map from './map';
 import {events} from '../helper/eventData';
-import Button from '@material-ui/core/Button';
 
 import './main.scss';
 
