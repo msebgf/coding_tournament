@@ -8,7 +8,7 @@ const uuid = require('uuid/v4');
 const AppFactory = require('../app');
 const mongoose = require('mongoose');
 
-describe('query', () => {
+describe('event', () => {
   const appPath = config.app.path;
   let eventData, fixturesHelper, app, port, host;
 
@@ -28,6 +28,7 @@ describe('query', () => {
         'long': 1234,
       },
       'description': 'A very long description with the report details',
+      'date': '2018/10/24',
     };
     fixturesHelper = new FixturesHelper(app);
     await fixturesHelper.setup();
@@ -45,15 +46,41 @@ describe('query', () => {
       await app.db.Event.remove({'_id': id});
     });
 
-    const executeValidRequest = () => {
+    const executeRequest = () => {
       return supertest(app).post(`${appPath}/events`).send(eventData);
     };
 
-    test('should return 201 with the created document', async() => {
-      const response = await executeValidRequest()
+    test('should return 201 with the created event', async() => {
+      const response = await executeRequest()
         .expect(201)
         .expect('Content-Type', /json/);
       eventId = response.body._id;
+    });
+
+    describe('should throw an error', () => {
+      test('when type us missing', async() => {
+        delete eventData.type;
+        await executeRequest()
+          .expect(400)
+      });
+
+      test('when description is missing', async() => {
+        delete eventData.description;
+        await executeRequest()
+          .expect(400)
+      });
+
+      test('when coordinates is missing', async() => {
+        delete eventData.coordinates;
+        await executeRequest()
+          .expect(400)
+      });
+
+      test('when date is missing', async() => {
+        delete eventData.date;
+        await executeRequest()
+          .expect(400)
+      });
     });
   });
 });

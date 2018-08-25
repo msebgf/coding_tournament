@@ -1,21 +1,18 @@
 const ErrorHelper = require('../common/helpers/error-helper');
-const mongoose = require('mongoose');
 
 module.exports = class {
   constructor(schemas) {
     this.Event = schemas.Event;
   }
 
-  async findAll(realm) {
-    return await this.Event.findAll();
-  }
-
-  async findOne(realm, id) {
-    const queryId = mongoose.Types.ObjectId(id);
-    return await this.Event.findOne({'_id': queryId});
+  _validateEvent(event) {
+    if (!event.type || !event.date || !event.description || !event.coordinates) {
+      throw ErrorHelper.buildError(400, 'Missing fields');
+    }
   }
 
   async createEvent(event) {
+    this._validateEvent(event);
     return await this.Event.create(event);
   }
 };

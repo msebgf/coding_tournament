@@ -8,4 +8,5 @@ module.exports = new Schema({
     'lat': {'type': Number, 'required': true},
     'long': {'type': Number, 'required': true},
   },
+  'date': {'type': Date, 'required': true},
 }, {'versionKey': false});
