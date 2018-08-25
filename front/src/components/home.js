@@ -1,13 +1,16 @@
 import React, { Component } from 'react';
-import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { userTest } from '../actions/user';
-import Button from '@material-ui/core/Button';
+import AppBar from '@material-ui/core/AppBar';
+import Toolbar from '@material-ui/core/Toolbar';
+import Grid from '@material-ui/core/Grid';
+import Info from './info';
+import Map from './map';
+import {events} from '../helper/eventData';
+
+import './main.scss';
 
 class Home extends Component {
-  static propTypes = {
-    prop: PropTypes,
-  };
   componentDidMount() {
     this.props.userTest();
   }
@@ -16,11 +19,23 @@ class Home extends Component {
     const { user } = this.props;
     const hasStore = user.load;
     return (
-      <div>
-        HOME {hasStore ? 'has store' : 'ops there is a problem with the store'}
-        <Button variant="contained" color="primary">
-          Hello World
-        </Button>
+      <div className='main'>
+        {/*HOME {hasStore ? 'has store' : 'ops there is a problem with the store'}*/}
+        <AppBar position='fixed' className='app-bar'>
+          <Toolbar variant="dense">
+            Deliktum - Jobsity coding tournament
+          </Toolbar>
+        </AppBar>
+        <Grid container spacing={0}>
+          <Grid item xs={8}>
+            <Map events={events}/>
+          </Grid>
+          <Grid className='side-bar' item xs={4}>
+            <div>
+              <Info events={events}/>
+            </div>
+          </Grid>
+        </Grid>
       </div>
     );
   }

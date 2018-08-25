@@ -1,0 +1,2 @@
+export const SELECT_LOCATION = 'SELECT_LOCATION';
+export const START_REPORT = 'START_REPORT';
