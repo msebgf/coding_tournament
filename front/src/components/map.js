@@ -1,7 +1,9 @@
 import React, { Component } from 'react';
-import PropTypes from 'prop-types';
 import {geolocated} from 'react-geolocated';
-import ReactMapboxGl, { Layer, Feature } from "react-mapbox-gl";
+import ReactMapboxGl from "react-mapbox-gl";
+import { Cluster } from "react-mapbox-gl";
+import { Marker } from "react-mapbox-gl";
+import Avatar from '@material-ui/core/Avatar';
 
 import './main.scss';
 
@@ -11,14 +13,38 @@ const Map = ReactMapboxGl({
 });
 
 class MapComponent extends Component {
-  static propTypes = {
-    prop: PropTypes,
+  getColor(pointCount) {
+    if (pointCount <= 3) {
+      return 'green';
+    } else if (pointCount < 10) {
+      return 'orange';
+    }
+    return 'red'
+  };
+
+  clusterMarker(coordinates, pointCount) {
+    const color = this.getColor(pointCount);
+    return (
+      <Marker coordinates={coordinates}>
+        <Avatar style={{
+          backgroundColor: `${color}`,
+        }}>{pointCount}</Avatar>
+      </Marker>
+    );
   };
 
   render() {
-    const {coords} = this.props;
+    const {coords, events} = this.props;
     const lat = coords && coords.latitude ? coords.latitude : -0.167;
     const long = coords && coords.longitude ? coords.longitude : -78.469;
+
+    const features = events.map((event) => {
+      return ({
+        geometry: {
+          coordinates: [event.coordinates.long, event.coordinates.lat],
+        }
+      });
+    });
 
     return (
       <Map
@@ -27,8 +53,19 @@ class MapComponent extends Component {
         zoom = {[16]}
         containerStyle= {{
           height: "100vh",
-          width: "100vw"
         }}>
+        <Cluster ClusterMarkerFactory={this.clusterMarker.bind(this)}>
+          {
+            features.map((feature, key) =>
+              <Marker
+                key={key}
+                coordinates={feature.geometry.coordinates}
+                >
+                <img src={'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png'}/>
+              </Marker>
+            )
+          }
+        </Cluster>
       </Map>
     );
   }
