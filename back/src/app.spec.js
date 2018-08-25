@@ -1,5 +1,5 @@
 const config = require('../config/config').getConfig();
-const QuerySchema = require('./queries/schema');
+const EventsSchema = require('./events/schema');
 const docker = require('../test/helpers/docker');
 const AppFactory = require('./app');
 const uuid = require('uuid/v4');
@@ -15,7 +15,7 @@ describe('app', () => {
   beforeEach(async() => {
     app = new AppFactory().getApp();
     app.mongoose.connect = jest.fn(() => Promise.resolve());
-    app.mongoose.model = jest.fn(() => () => QuerySchema);
+    app.mongoose.model = jest.fn(() => () => EventsSchema);
     await app.setup();
   });
 
@@ -68,10 +68,10 @@ describe('app', () => {
   });
 
   describe('.db', () => {
-    test('should export the Query models', () => {
-      expect(app.db.SMQuery).toEqual(expect.any(Function));
+    test('should export the Event models', () => {
+      expect(app.db.Event).toEqual(expect.any(Function));
       expect(app.mongoose.model).toHaveBeenCalledTimes(1);
-      expect(app.mongoose.model).toHaveBeenCalledWith('SMQuery', QuerySchema);
+      expect(app.mongoose.model).toHaveBeenCalledWith('Event', EventsSchema);
     });
   });
 

@@ -9,23 +9,23 @@ module.exports = class FixturesHelper {
   async setup() {
     const db = this.app.db;
 
-    await db.SMQuery.remove({});
+    await db.Event.remove({});
 
-    const promises = data.queries.map((query) => {
-      query._id = mongoose.Types.ObjectId(query.id);
-      delete query.id;
-      const newQuery = db.SMQuery.create(query);
-      query.id = String(query._id);
+    const promises = data.events.map((event) => {
+      event._id = mongoose.Types.ObjectId(event.id);
+      delete event.id;
+      const newQuery = db.Event.create(event);
+      event.id = String(event._id);
       return newQuery;
     });
 
     return Promise.all(promises);
   }
 
-  async recreateQuery(id) {
+  async recreateEvent(id) {
     const db = this.app.db;
-    const queryData = data.queries.find((query) => query.id === id);
-    await db.SMQuery.remove({'_id': queryData.id, 'realm': queryData.realm});
-    return await db.SMQuery.create(queryData);
+    const eventData = data.events.find((event) => event.id === id);
+    await db.Event.remove({'_id': eventData.id});
+    return await db.Event.create(eventData);
   }
 };

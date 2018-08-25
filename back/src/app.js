@@ -3,7 +3,7 @@ const path = require('path');
 const glob = require('glob');
 const mongoose = require('mongoose');
 const config = require('../config/config').getConfig();
-const QuerySchema = require('./queries/schema');
+const EventSchema = require('./events/schema');
 
 class AppFactory {
   constructor(dbUri) {
@@ -40,8 +40,8 @@ class AppFactory {
   }
 
   async _setupDatabase(app) {
-    const SMQuery = app.mongoose.model('SMQuery', QuerySchema);
-    app.db = {SMQuery};
+    const Event = app.mongoose.model('Event', EventSchema);
+    app.db = {Event};
     return app.mongoose.connect(this.dbUri).then(() => {
       app.db.initialized = true;
     }).catch((e) => {
