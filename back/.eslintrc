@@ -1,0 +1,14 @@
+{
+  "extends": "devsu/node",
+  "env": {
+    "jest": true
+  },
+  "parserOptions": {
+    "ecmaVersion":2017
+  },
+  "rules": {
+    "max-len": ["error", 120],
+    "max-lines": ["warn", 1500],
+    "no-console": ["error", { "allow": ["error"] }]
+  }
+}

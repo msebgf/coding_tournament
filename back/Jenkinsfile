@@ -1,0 +1,107 @@
+pipeline {
+  // agent any is required by post build steps
+  agent { label 'docker' }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '5', artifactNumToKeepStr: '20', daysToKeepStr: '20'))
+  }
+  environment {
+    NODE_VERSION = '8.7.0'
+    COMPOSE_PROJECT_NAME = "${env.BUILD_TAG}"
+  }
+  stages {
+    stage('prepare') {
+      steps {
+        ciSkip action: 'check'
+        script {
+          env.TAG_NAME = 'latest'
+          if (env.TAG_NAME.startsWith('release/')){
+            env.TAG_NAME = env.TAG_NAME.split('release/')[1]
+            result = sh ( script : "git ls-remote --tags origin | grep refs/tags/v${env.TAG_NAME}", returnStatus:true)
+            if(result == 0){
+              error "release tag already exists"
+            }
+          }
+        }
+      }
+    }
+
+    stage('test & install node_modules') {
+      agent {
+        dockerfile {
+          dir 'build-tools/node-with-docker'
+          additionalBuildArgs '--build-arg NODE_VERSION=$NODE_VERSION'
+          args '-u 1000:999 -v $HOME/yarn-cache:/home/node/.cache/yarn -v /var/run/docker.sock:/var/run/docker.sock'
+        }
+      }
+      steps {
+        sh "rm -rf node_modules && yarn --frozen-lockfile && yarn coverage"
+        stash includes: 'coverage/**', name: 'coverage'
+      }
+      post {
+        always {
+          junit "test-report.xml"
+          // TODO: Publishing HTML is not working
+          publishHTML(target: [allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'coverage/lcov-report', reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
+        }
+      }
+    }
+    stage('build docker'){
+      agent { label 'docker' }
+      when { expression { env.BRANCH_NAME ==~ /master|release\/.+/ } }
+      steps {
+        sh """
+          docker build --build-arg NODE_VERSION=${NODE_VERSION} -t smartmate-io/queries:${env.TAG_NAME} .
+          docker tag smartmate-io/queries:${env.TAG_NAME} docker.devsu.us/smartmate-io/queries:${env.TAG_NAME}
+          docker push docker.devsu.us/smartmate-io/queries:${env.TAG_NAME}
+        """
+      }
+    }
+    stage('deploy to dev') {
+      when { branch 'master' }
+      steps {
+        build job: '../smartmate-ecosystem-docker/master',
+         parameters: [
+            [$class: 'StringParameterValue', name: 'DEPLOY_ENV', value: 'dev'],
+            [$class: 'StringParameterValue', name: 'SERVICES_TO_DEPLOY', value: 'queries:latest'],
+            [$class: 'StringParameterValue', name: 'DOCKER_COMPOSE_ARGUMENTS', value: "--no-deps"]
+          ]
+      }
+    }
+    stage('deploy to release'){
+      when { expression { env.TAG_NAME.startsWith('release/') } }
+      steps {
+        build job: '../smartmate-ecosystem-docker/master',
+          parameters: [
+            [$class: 'StringParameterValue', name: 'DEPLOY_ENV', value: 'release'],
+            [$class: 'StringParameterValue', name: 'SERVICES_TO_DEPLOY', value: "queries:${env.TAG_NAME}"],
+            [$class: 'StringParameterValue', name: 'DOCKER_COMPOSE_ARGUMENTS', value: "--no-deps"]
+          ]
+      }
+    }
+    stage('deploy to prod') {
+      when { expression { env.TAG_NAME.startsWith('release/') } }
+      steps {
+        input "I'm ready to deploy to production. Do I do it?"
+         withBitbucketRepo (credentialId: 'jenkins') {
+          sh "git tag -l | xargs git tag -d" // clean up tags
+          sh "git tag -a v${env.TAG_NAME} -m 'Release ${env.TAG_NAME}'"
+          sh "git push git@bitbucket.org:devsu/smartmate-queries.git v${env.TAG_NAME}"
+        }
+        build job: '../smartmate-ecosystem-docker/master',
+          parameters: [
+            [$class: 'StringParameterValue', name: 'DEPLOY_ENV', value: 'prod'],
+            [$class: 'StringParameterValue', name: 'SERVICES_TO_DEPLOY', value: "queries:${env.TAG_NAME}"],
+            [$class: 'StringParameterValue', name: 'DOCKER_COMPOSE_ARGUMENTS', value: "--no-deps"]
+          ]
+      }
+    }
+  }
+  post {
+    always {
+      sendSlackNotification channel: '#smartmate'
+    }
+    failure {
+      ciSkip action: 'postProcess'
+    }
+  }
+}

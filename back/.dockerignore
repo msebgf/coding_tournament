@@ -1,0 +1,7 @@
+**/.git
+secrets/
+__mocks__/
+kubernetes/
+coverage/
+test/
+test-results.xml
